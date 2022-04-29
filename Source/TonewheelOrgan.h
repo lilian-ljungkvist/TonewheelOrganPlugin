@@ -25,7 +25,8 @@ private:
     double sampleRate;
 //    std::vector <std::vector <TonewheelWavetableOscillator> > drawbarOscillators;
     std::vector <TonewheelWavetableOscillator> drawbarOscillators[9];//Make multiple oscillators for each drawbar in a vector
-    std::vector <float> generateSineWaveTable(int drawBarId);
+    std::vector <float> generateSineWaveTable(int drawBarId, int oscillatorId);
     juce::Reverb reverb;
+    juce::ADSR envelope;
 //    juce::Reverb::Parameters parameters;
 };

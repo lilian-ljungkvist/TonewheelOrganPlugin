@@ -28,6 +28,7 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     TonewheelAudioProcessor& audioProcessor;
+    juce::Slider DrawbarSliders[9]; //9 Sliders for Drawbars
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TonewheelAudioProcessorEditor)
 };

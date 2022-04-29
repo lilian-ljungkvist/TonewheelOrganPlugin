@@ -20,7 +20,7 @@ TonewheelAudioProcessorEditor::TonewheelAudioProcessorEditor (TonewheelAudioProc
     {
         addAndMakeVisible(drawbarSlider); // Make all drawbar sliders visible
         drawbarSlider.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical); //Make all drawbars vertical sliders
-        drawbarSlider.setRange(1,8,1);
+        drawbarSlider.setRange(0,8,1);
         
     }
 }
@@ -42,15 +42,15 @@ void TonewheelAudioProcessorEditor::paint (juce::Graphics& g)
     g.setFont (20.0f);
     
     int centeredPos = getWidth()/20;
-    g.drawFittedText ("16'", (centeredPos),getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
-    g.drawFittedText ("5 1/3'", (10 + centeredPos) * 2,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
-    g.drawFittedText ("8'", (20 + centeredPos) * 3,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
-    g.drawFittedText ("4'", (20 + centeredPos) * 4,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
-    g.drawFittedText ("2 2/3'", (20 + centeredPos) * 5,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
-    g.drawFittedText ("2'", (20 + centeredPos) * 6,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
-    g.drawFittedText ("1 3/5'", (20 + centeredPos) * 7,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
-    g.drawFittedText ("1 1/3'", (20 + centeredPos) * 8,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
-    g.drawFittedText ("1'", (20 + centeredPos) * 9,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
+    g.drawFittedText ("16'", DrawbarSliders[0].getX() + getWidth()/30,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
+    g.drawFittedText ("5 1/3'", DrawbarSliders[1].getX() + getWidth()/50,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
+    g.drawFittedText ("8'", DrawbarSliders[2].getX() + getWidth()/30,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
+    g.drawFittedText ("4'", DrawbarSliders[3].getX() + getWidth()/30,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
+    g.drawFittedText ("2 2/3'", DrawbarSliders[4].getX() + getWidth()/50,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
+    g.drawFittedText ("2'", DrawbarSliders[5].getX() + getWidth()/30,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
+    g.drawFittedText ("1 3/5'", DrawbarSliders[6].getX() + getWidth()/50,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
+    g.drawFittedText ("1 1/3'", DrawbarSliders[7].getX() + getWidth()/50,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
+    g.drawFittedText ("1'", DrawbarSliders[8].getX() + getWidth()/30,getHeight() - 50,centeredPos,50, juce::Justification::topLeft, 1);
 }
 
 void TonewheelAudioProcessorEditor::resized()

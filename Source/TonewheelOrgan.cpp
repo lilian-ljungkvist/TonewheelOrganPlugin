@@ -21,7 +21,7 @@ void TonewheelOrgan::prepareToPlay(double sampleRate)
     initializeOscillators();
     reverb.setParameters(juce::Reverb::Parameters({0.3,0.2,0.2,0.2,1}));
     reverb.setSampleRate(sampleRate);
-    envelope.setParameters(juce::ADSR::Parameters({0.08,0.2,0.5,0.2}));
+    envelope.setParameters(juce::ADSR::Parameters({0.08,0.2,1,0.2}));
     envelope.setSampleRate(sampleRate);
    
 }
@@ -153,9 +153,12 @@ void TonewheelOrgan::render(juce::AudioBuffer<float> &buffer, int startSample, i
     for(auto channel = 1; channel < buffer.getNumChannels(); channel++)
     {
         std::copy(firstChannel + startSample, firstChannel + endSample, buffer.getWritePointer(channel) + startSample); //Copy first channel to all channels
+     
     }
     reverb.processMono(firstChannel, buffer.getNumSamples());
     envelope.applyEnvelopeToBuffer (buffer, 0, buffer.getNumSamples());
+    
+    
 
 
 }

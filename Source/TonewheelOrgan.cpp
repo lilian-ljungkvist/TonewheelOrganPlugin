@@ -23,7 +23,7 @@ void TonewheelOrgan::prepareToPlay(double sampleRate)
     reverb.setSampleRate(sampleRate);
     envelope.setParameters(juce::ADSR::Parameters({0.08,0.2,1,0.2}));
     envelope.setSampleRate(sampleRate);
-   
+       
 }
 void TonewheelOrgan::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
@@ -44,7 +44,7 @@ void TonewheelOrgan::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
 }
 void TonewheelOrgan::handleMidiEvent(const juce::MidiMessage& midiEvent)
 {
-    for(auto& drawbar : drawbarOscillators) //Go through each drawbar
+    for(auto& drawbar : drawbars) //Go through each drawbar
     {
 //        for(auto& oscillator : drawbar)
 //        {
@@ -53,7 +53,7 @@ void TonewheelOrgan::handleMidiEvent(const juce::MidiMessage& midiEvent)
             {
                 const auto oscillatorId = midiEvent.getNoteNumber(); //Gets note for oscillator from MIDI event
                 const auto frequency = midiNoteNumberToFrequency(oscillatorId);
-                drawbarOscillators[0][oscillatorId].setFrequency(frequency); //Set Oscillator to the frequency of the MIDI note played
+                drawbar.oscillators[oscillatorId].setFrequency(frequency); //Set Oscillator to the frequency of the MIDI note played
                 envelope.noteOn();
                 
             }
@@ -61,7 +61,7 @@ void TonewheelOrgan::handleMidiEvent(const juce::MidiMessage& midiEvent)
             {
                 const auto oscillatorId = midiEvent.getNoteNumber();
                 
-                drawbarOscillators[0][oscillatorId].stop();
+                drawbar.oscillators[oscillatorId].stop();
                 
                 envelope.noteOff();
                 
@@ -69,7 +69,7 @@ void TonewheelOrgan::handleMidiEvent(const juce::MidiMessage& midiEvent)
             if(midiEvent.isAllNotesOff())
             {
              
-                    for(auto& oscillator : drawbar)
+                    for(auto& oscillator : drawbar.oscillators)
                     {
                         oscillator.stop();
                     }
@@ -94,20 +94,27 @@ float TonewheelOrgan::midiNoteNumberToFrequency(int midiNoteNumber)
 void TonewheelOrgan::initializeOscillators()
 {
     constexpr auto OSCILLATORS_PER_DRAWBAR= 128;
-//    const auto wavetable = generateSineWaveTable(2);
-    for(auto i = 0; i < juce::numElementsInArray(drawbarOscillators); i++) //Go through each drawbar
+////    const auto wavetable = generateSineWaveTable(2);
+//    for(auto i = 0; i < juce::numElementsInArray(drawbarOscillators); i++) //Go through each drawbar
+//    {
+//        drawbarOscillators[i].clear();
+//
+//        for(auto j = 0; j < OSCILLATORS_PER_DRAWBAR; j++)
+//        {
+//            drawbarOscillators[i].emplace_back(generateSineWaveTable(i, j), sampleRate);
+//        }
+//    }
+    for(auto& drawbar : drawbars) //Go through each drawbar
     {
-        drawbarOscillators[i].clear();
-
         for(auto j = 0; j < OSCILLATORS_PER_DRAWBAR; j++)
         {
-            drawbarOscillators[i].emplace_back(generateSineWaveTable(i, j), sampleRate);
+        drawbar.oscillators.emplace_back(generateSineWaveTable(drawbar),sampleRate);
         }
     }
 
 }
 
-std::vector <float> TonewheelOrgan::generateSineWaveTable(int drawbarId, int oscillatorId)
+std::vector <float> TonewheelOrgan::generateSineWaveTable(Drawbar drawbar)
 {
     constexpr auto WAVETABLE_LENGTH = 64;
     
@@ -126,6 +133,19 @@ std::vector <float> TonewheelOrgan::generateSineWaveTable(int drawbarId, int osc
             
             
             sineWaveTable[i] = (std::sinf(currAngle) + std::sinf(currAngle * 2) + std::sinf(currAngle * 3))/3;
+            for(auto& drawbar : drawbars)
+            {
+                if(drawbar.volumeLevel != 0)
+                {
+                    sineWaveTable[i] = std::sinf(currAngle);
+                    sineWaveTable[i] += std::sinf(currAngle * drawbar.harmonic) * drawbar.volumeLevel; //Add another sinewave at that drawbars harmonic frequency and multiply the amplitude by the volume level
+                    
+//                    sineWaveTable[i] = std::cos(sineWaveTable[i]);
+                }
+
+            }
+            
+
 
             
 //            sineWaveTable[i] = std::sinf(currAngle);
@@ -137,9 +157,9 @@ std::vector <float> TonewheelOrgan::generateSineWaveTable(int drawbarId, int osc
 void TonewheelOrgan::render(juce::AudioBuffer<float> &buffer, int startSample, int endSample)
 {
     auto * firstChannel = buffer.getWritePointer(0);
-    for(auto& drawbar : drawbarOscillators) //Go through each drawbar
+    for(auto& drawbar : drawbars) //Go through each drawbar
     {
-        for(auto& oscillator : drawbar) //Each oscillator in the drawbar
+        for(auto& oscillator : drawbar.oscillators) //Each oscillator in the drawbar
         {
             if(oscillator.isPlaying())
             {
@@ -156,7 +176,7 @@ void TonewheelOrgan::render(juce::AudioBuffer<float> &buffer, int startSample, i
      
     }
     reverb.processMono(firstChannel, buffer.getNumSamples());
-    envelope.applyEnvelopeToBuffer (buffer, 0, buffer.getNumSamples());
+//    envelope.applyEnvelopeToBuffer (buffer, 0, buffer.getNumSamples());
     
     
 

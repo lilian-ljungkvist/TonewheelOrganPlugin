@@ -9,6 +9,11 @@
 */
 
 #include "Drawbar.h"
-void setVolumeLevel(int volumeNumber){
+ Drawbar::Drawbar(float harmonic)
+{
+    
+}
+void Drawbar::setVolumeLevel(int volumeNumber)
+{
     volumeLevel = volumeNumber;
 };

@@ -9,15 +9,15 @@
 */
 
 #pragma once
-class Drawbar {
-    Drawbar(float harmonic) {
-        
-    }
-    ~ Drawbar(){}
+#include "TonewheelWavetableOscillator.h"
+class Drawbar
+{
 public:
+    Drawbar(float harmonic);
     void setVolumeLevel(int volumeNumber);
-private:
     int volumeLevel;
+    std::vector <TonewheelWavetableOscillator> oscillators ;
     float harmonic;
+private:
 
 };

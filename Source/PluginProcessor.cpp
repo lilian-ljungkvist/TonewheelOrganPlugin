@@ -95,6 +95,7 @@ void TonewheelAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    auto drawbarVolumes = getDrawBarSettings(apvts);
     organ.prepareToPlay(sampleRate);
 }
 
@@ -132,32 +133,14 @@ bool TonewheelAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 
 void TonewheelAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    auto drawbarVolumes = getDrawBarSettings(apvts);
     juce::ScopedNoDenormals noDenormals;
     organ.processBlock(buffer, midiMessages);
-//    auto totalNumInputChannels  = getTotalNumInputChannels();
-//    auto totalNumOutputChannels = getTotalNumOutputChannels();
-//
-//    // In case we have more outputs than inputs, this code clears any output
-//    // channels that didn't contain input data, (because these aren't
-//    // guaranteed to be empty - they may contain garbage).
-//    // This is here to avoid people getting screaming feedback
-//    // when they first compile a plugin, but obviously you don't need to keep
-//    // this code if your algorithm always overwrites all the output channels.
-//    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-//        buffer.clear (i, 0, buffer.getNumSamples());
-//
-//    // This is the place where you'd normally do the guts of your plugin's
-//    // audio processing...
-//    // Make sure to reset the state if your inner loop is processing
-//    // the samples and the outer loop is handling the channels.
-//    // Alternatively, you can process the samples with the channels
-//    // interleaved by keeping the same state.
-//    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-//    {
-//        auto* channelData = buffer.getWritePointer (channel);
-//
-//        // ..do something to the data...
-//    }
+    
+   
+//    oscillator * drawBarVolumes.volume1
+    
+    
 }
 
 //==============================================================================
@@ -190,4 +173,40 @@ void TonewheelAudioProcessor::setStateInformation (const void* data, int sizeInB
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new TonewheelAudioProcessor();
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout TonewheelAudioProcessor::paramCreate()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout params;
+   
+    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN1", "Drawbar 1 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
+    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN2", "Drawbar 2 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
+    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN3", "Drawbar 3 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
+    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN4", "Drawbar 4 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
+    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN5", "Drawbar 5 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
+    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN6", "Drawbar 6 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
+    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN7", "Drawbar 7 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
+    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN8", "Drawbar 8 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
+    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN9", "Drawbar 9 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
+    
+    return params;
+    
+}
+
+DrawbarSettings getDrawBarSettings(juce::AudioProcessorValueTreeState& params)
+{
+ 
+    DrawbarSettings settings;
+    
+    settings.volume1 = params.getRawParameterValue("DRAWBARGAIN1")->load();
+    settings.volume2 = params.getRawParameterValue("DRAWBARGAIN2")->load();
+    settings.volume3 = params.getRawParameterValue("DRAWBARGAIN3")->load();
+    settings.volume4 = params.getRawParameterValue("DRAWBARGAIN4")->load();
+    settings.volume5 = params.getRawParameterValue("DRAWBARGAIN5")->load();
+    settings.volume6 = params.getRawParameterValue("DRAWBARGAIN6")->load();
+    settings.volume7 = params.getRawParameterValue("DRAWBARGAIN7")->load();
+    settings.volume8 = params.getRawParameterValue("DRAWBARGAIN8")->load();
+    settings.volume9 = params.getRawParameterValue("DRAWBARGAIN9")->load();
+    
+    return settings;
 }

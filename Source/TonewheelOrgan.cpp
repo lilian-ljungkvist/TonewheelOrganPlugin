@@ -23,12 +23,13 @@ void TonewheelOrgan::prepareToPlay(double sampleRate)
     reverb.setSampleRate(sampleRate);
     envelope.setParameters(juce::ADSR::Parameters({0.08,0.2,1,0.2}));
     envelope.setSampleRate(sampleRate);
-       
+    
+    
 }
 void TonewheelOrgan::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     auto currentSample = 0;
-    
+
     for(const auto midiMessage : midiMessages)
     {
         const auto midiEvent = midiMessage.getMessage(); //Get each MIDI message
@@ -46,8 +47,7 @@ void TonewheelOrgan::handleMidiEvent(const juce::MidiMessage& midiEvent)
 {
     for(auto& drawbar : drawbars) //Go through each drawbar
     {
-//        for(auto& oscillator : drawbar)
-//        {
+
 //            //Called when key was pressed or key was released etc..
             if(midiEvent.isNoteOn())
             {
@@ -75,7 +75,6 @@ void TonewheelOrgan::handleMidiEvent(const juce::MidiMessage& midiEvent)
                     }
         
             }
-//        }
     }
     
 }
@@ -93,7 +92,7 @@ float TonewheelOrgan::midiNoteNumberToFrequency(int midiNoteNumber)
 
 void TonewheelOrgan::initializeOscillators()
 {
-    constexpr auto OSCILLATORS_PER_DRAWBAR= 128;
+    constexpr auto OSCILLATORS_PER_DRAWBAR= 88;
 ////    const auto wavetable = generateSineWaveTable(2);
 //    for(auto i = 0; i < juce::numElementsInArray(drawbarOscillators); i++) //Go through each drawbar
 //    {
@@ -138,7 +137,7 @@ std::vector <float> TonewheelOrgan::generateSineWaveTable(Drawbar drawbar)
                 if(drawbar.volumeLevel != 0)
                 {
                     sineWaveTable[i] = std::sinf(currAngle);
-                    sineWaveTable[i] += std::sinf(currAngle * drawbar.harmonic) * drawbar.volumeLevel; //Add another sinewave at that drawbars harmonic frequency and multiply the amplitude by the volume level
+                    sineWaveTable[i] += std::sinf(currAngle * drawbar.harmonic);//Add another sinewave at that drawbars harmonic frequency and multiply the amplitude by the volume level
                     
 //                    sineWaveTable[i] = std::cos(sineWaveTable[i]);
                 }
@@ -177,9 +176,6 @@ void TonewheelOrgan::render(juce::AudioBuffer<float> &buffer, int startSample, i
     }
     reverb.processMono(firstChannel, buffer.getNumSamples());
 //    envelope.applyEnvelopeToBuffer (buffer, 0, buffer.getNumSamples());
-    
-    
-
 
 }
 

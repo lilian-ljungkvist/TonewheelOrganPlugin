@@ -12,6 +12,23 @@
 #include "TonewheelOrgan.h"
 
 
+
+struct DrawbarSettings
+{
+    float volume1{0};
+    float volume2{0};
+    float volume3{0};
+    float volume4{0};
+    float volume5{0};
+    float volume6{0};
+    float volume7{0};
+    float volume8{0};
+    float volume9{0};
+    
+};
+
+DrawbarSettings getDrawBarSettings(juce::AudioProcessorValueTreeState& params);
+
 //==============================================================================
 /**
 */
@@ -54,6 +71,10 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+    
+    static juce::AudioProcessorValueTreeState::ParameterLayout paramCreate();
+    juce::AudioProcessorValueTreeState apvts{*this, nullptr, "Parameters", paramCreate()};
+
 
 private:
     TonewheelOrgan organ;

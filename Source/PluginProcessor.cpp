@@ -8,9 +8,10 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include <iostream>
 
 //==============================================================================
-TonewheelAudioProcessor::TonewheelAudioProcessor()
+TonewheelOrganSynthAudioProcessor::TonewheelOrganSynthAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
@@ -19,22 +20,23 @@ TonewheelAudioProcessor::TonewheelAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), apvts (*this, nullptr, "Parameters", paramCreate())
 #endif
 {
+    
 }
 
-TonewheelAudioProcessor::~TonewheelAudioProcessor()
+TonewheelOrganSynthAudioProcessor::~TonewheelOrganSynthAudioProcessor()
 {
 }
 
 //==============================================================================
-const juce::String TonewheelAudioProcessor::getName() const
+const juce::String TonewheelOrganSynthAudioProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool TonewheelAudioProcessor::acceptsMidi() const
+bool TonewheelOrganSynthAudioProcessor::acceptsMidi() const
 {
    #if JucePlugin_WantsMidiInput
     return true;
@@ -43,7 +45,7 @@ bool TonewheelAudioProcessor::acceptsMidi() const
    #endif
 }
 
-bool TonewheelAudioProcessor::producesMidi() const
+bool TonewheelOrganSynthAudioProcessor::producesMidi() const
 {
    #if JucePlugin_ProducesMidiOutput
     return true;
@@ -52,7 +54,7 @@ bool TonewheelAudioProcessor::producesMidi() const
    #endif
 }
 
-bool TonewheelAudioProcessor::isMidiEffect() const
+bool TonewheelOrganSynthAudioProcessor::isMidiEffect() const
 {
    #if JucePlugin_IsMidiEffect
     return true;
@@ -61,52 +63,72 @@ bool TonewheelAudioProcessor::isMidiEffect() const
    #endif
 }
 
-double TonewheelAudioProcessor::getTailLengthSeconds() const
+double TonewheelOrganSynthAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int TonewheelAudioProcessor::getNumPrograms()
+int TonewheelOrganSynthAudioProcessor::getNumPrograms()
 {
     return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
                 // so this should be at least 1, even if you're not really implementing programs.
 }
 
-int TonewheelAudioProcessor::getCurrentProgram()
+int TonewheelOrganSynthAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void TonewheelAudioProcessor::setCurrentProgram (int index)
+void TonewheelOrganSynthAudioProcessor::setCurrentProgram (int index)
 {
 }
 
-const juce::String TonewheelAudioProcessor::getProgramName (int index)
+const juce::String TonewheelOrganSynthAudioProcessor::getProgramName (int index)
 {
     return {};
 }
 
-void TonewheelAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void TonewheelOrganSynthAudioProcessor::changeProgramName (int index, const juce::String& newName)
 {
+    
 }
 
 //==============================================================================
-void TonewheelAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void TonewheelOrganSynthAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
-    auto drawbarVolumes = getDrawBarSettings(apvts);
-    organ.prepareToPlay(sampleRate);
+     
+    drawbarsArr[0].harmonic = 0.5;
+    drawbarsArr[1].harmonic = 0.33;
+    drawbarsArr[2].harmonic = 1;
+    drawbarsArr[3].harmonic = 2;
+    drawbarsArr[4].harmonic = 3;
+    drawbarsArr[5].harmonic = 4;
+    drawbarsArr[6].harmonic = 5;
+    drawbarsArr[7].harmonic = 6;
+    drawbarsArr[8].harmonic = 8;
+    
+    drawbarsArr[0].volumeLevel = 0;
+    drawbarsArr[1].volumeLevel = 0;
+    drawbarsArr[2].volumeLevel = 0;
+    drawbarsArr[3].volumeLevel = 0;
+    drawbarsArr[4].volumeLevel = 0;
+    drawbarsArr[5].volumeLevel = 0;
+    drawbarsArr[6].volumeLevel = 0;
+    drawbarsArr[7].volumeLevel = 0;
+    drawbarsArr[8].volumeLevel = 0;
+    
+    initializeOscillators();
+    updateDrawBarVolume();
 }
 
-void TonewheelAudioProcessor::releaseResources()
+void TonewheelOrganSynthAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool TonewheelAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool TonewheelOrganSynthAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
   #if JucePlugin_IsMidiEffect
     juce::ignoreUnused (layouts);
@@ -130,39 +152,123 @@ bool TonewheelAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
   #endif
 }
 #endif
-
-void TonewheelAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+juce::AudioProcessorValueTreeState::ParameterLayout TonewheelOrganSynthAudioProcessor::paramCreate()
 {
-    auto drawbarVolumes = getDrawBarSettings(apvts);
-    juce::ScopedNoDenormals noDenormals;
-    organ.processBlock(buffer, midiMessages);
+//    juce::AudioProcessorValueTreeState::ParameterLayout params;
+    std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+//    params.add(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN1", "Drawbar 1 Gain", juce::NormalisableRange<float>(0.0f, 8.0f, 1.0f, 1.0f), 0.0f));
+//    params.add(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN2", "Drawbar 2 Gain", juce::NormalisableRange<float>(0.0f, 8.0f, 1.0f, 1.0f), 0.0f));
+//    params.add(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN3", "Drawbar 3 Gain", juce::NormalisableRange<float>(0.0f, 8.0f, 1.0f, 1.0f), 0.0f));
+//    params.add(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN4", "Drawbar 4 Gain", juce::NormalisableRange<float>(0.0f, 8.0f, 1.0f, 1.0f), 0.0f));
+//    params.add(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN5", "Drawbar 5 Gain", juce::NormalisableRange<float>(0.0f, 8.0f, 1.0f, 1.0f), 0.0f));
+//    params.add(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN6", "Drawbar 6 Gain", juce::NormalisableRange<float>(0.0f, 8.0f, 1.0f, 1.0f), 0.0f));
+//    params.add(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN7", "Drawbar 7 Gain", juce::NormalisableRange<float>(0.0f, 8.0f, 1.0f, 1.0f), 0.0f));
+//    params.add(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN8", "Drawbar 8 Gain", juce::NormalisableRange<float>(0.0f, 8.0f, 1.0f, 1.0f), 0.0f));
+//    params.add(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN9", "Drawbar 9 Gain", juce::NormalisableRange<float>(0.0f, 8.0f, 1.0f, 1.0f), 0.0f));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN1", "Drawbar 1 Gain", 0,8,1));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN2", "Drawbar 2 Gain", 0,8,1));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN3", "Drawbar 3 Gain", 0,8,1));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN4", "Drawbar 4 Gain", 0,8,1));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN5", "Drawbar 5 Gain", 0,8,1));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN6", "Drawbar 6 Gain", 0,8,1));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN7", "Drawbar 7 Gain", 0,8,1));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN8", "Drawbar 8 Gain", 0,8,1));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("DRAWBARGAIN9", "Drawbar 9 Gain", 0,8,1));
     
-   
-//    oscillator * drawBarVolumes.volume1
-    
+//    return params;
+    return {params.begin(),params.end()};
     
 }
 
+void TonewheelOrganSynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    juce::ScopedNoDenormals noDenormals;
+    
+  
+    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumOutputChannels = getTotalNumOutputChannels();
+
+    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+        buffer.clear (i, 0, buffer.getNumSamples());
+    
+    auto currentSample = 0;
+
+    for(const auto midiMessage : midiMessages)
+    {
+        const auto midiEvent = midiMessage.getMessage(); //Get each MIDI message
+        const auto midiEventSample = static_cast <int> (midiEvent.getTimeStamp()); //Get each sample from MIDI message
+        
+        render(buffer, currentSample, midiEventSample);
+        handleMidiEvent(midiEvent);
+        
+        currentSample = midiEventSample;
+    }
+
+//    initializeOscillators();
+    render(buffer, currentSample, buffer.getNumSamples());
+    
+    
+    updateDrawBarVolume();
+    
+}
+
+void TonewheelOrganSynthAudioProcessor::initializeOscillators()
+{
+    int numOscillators = 128;//Number of keys
+    for(auto& drawbar : drawbarsArr) //Go through each drawbar
+    {
+        drawbar.oscillators.clear();
+        for(auto j = 0; j < numOscillators; j++)
+        {
+        drawbar.oscillators.emplace_back(generateSineWaveTable(drawbar),getSampleRate());
+        }
+    }
+
+}
+
+void TonewheelOrganSynthAudioProcessor::updateDrawBarVolume()
+{
+    auto settings = getDrawBarSettings(apvts);
+    
+    drawbarsArr[0].volumeLevel = settings.volume1;
+    drawbarsArr[1].volumeLevel = settings.volume2;
+    drawbarsArr[2].volumeLevel = settings.volume3;
+    drawbarsArr[3].volumeLevel = settings.volume4;
+    drawbarsArr[4].volumeLevel = settings.volume5;
+    drawbarsArr[5].volumeLevel = settings.volume6;
+    drawbarsArr[6].volumeLevel = settings.volume7;
+    drawbarsArr[7].volumeLevel = settings.volume8;
+    drawbarsArr[8].volumeLevel = settings.volume9;
+    
+//    for(auto& drawbar : drawbarsArr)
+//    {
+//        std::cout<<"drawbar.volumeLevel: "<<drawbar.volumeLevel<<std::endl;
+//    }
+    
+
+        
+}
+
 //==============================================================================
-bool TonewheelAudioProcessor::hasEditor() const
+bool TonewheelOrganSynthAudioProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor* TonewheelAudioProcessor::createEditor()
+juce::AudioProcessorEditor* TonewheelOrganSynthAudioProcessor::createEditor()
 {
-    return new TonewheelAudioProcessorEditor (*this);
+    return new TonewheelOrganSynthAudioProcessorEditor (*this);
 }
 
 //==============================================================================
-void TonewheelAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void TonewheelOrganSynthAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 }
 
-void TonewheelAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void TonewheelOrganSynthAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
@@ -172,31 +278,16 @@ void TonewheelAudioProcessor::setStateInformation (const void* data, int sizeInB
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new TonewheelAudioProcessor();
+    return new TonewheelOrganSynthAudioProcessor();
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout TonewheelAudioProcessor::paramCreate()
-{
-    juce::AudioProcessorValueTreeState::ParameterLayout params;
-   
-    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN1", "Drawbar 1 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN2", "Drawbar 2 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN3", "Drawbar 3 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN4", "Drawbar 4 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN5", "Drawbar 5 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN6", "Drawbar 6 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN7", "Drawbar 7 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN8", "Drawbar 8 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>("DRAWBARVGAIN9", "Drawbar 9 Gain", juce::NormalisableRange<float>(0.0f, 12.0f, 1.0f, 1.0f), 0.0f));
-    
-    return params;
-    
-}
 
 DrawbarSettings getDrawBarSettings(juce::AudioProcessorValueTreeState& params)
 {
  
     DrawbarSettings settings;
+    
+ 
     
     settings.volume1 = params.getRawParameterValue("DRAWBARGAIN1")->load();
     settings.volume2 = params.getRawParameterValue("DRAWBARGAIN2")->load();
@@ -208,5 +299,94 @@ DrawbarSettings getDrawBarSettings(juce::AudioProcessorValueTreeState& params)
     settings.volume8 = params.getRawParameterValue("DRAWBARGAIN8")->load();
     settings.volume9 = params.getRawParameterValue("DRAWBARGAIN9")->load();
     
+//    std::cout<<"settings.volume1: "<<settings.volume1<<"  settings.volume2: "<<settings.volume2<<"  settings.volume3: "<<settings.volume3<<"  settings.volume4: "<<settings.volume4<<"settings.volume5: "<<settings.volume5<<"  settings.volume6: "<<settings.volume6<<"  settings.volume7: "<<settings.volume7<<"  settings.volume8: "<<settings.volume8<<"  settings.volume9: "<<settings.volume9<<std::endl;
     return settings;
+}
+
+std::vector <float>  TonewheelOrganSynthAudioProcessor::generateSineWaveTable(Drawbar drawbar)
+{
+    constexpr auto WAVETABLE_LENGTH = 64;
+  
+    std::vector <float> sineWaveTable(WAVETABLE_LENGTH);
+      
+        auto angleDelta = juce::MathConstants<double>::twoPi / (double) (WAVETABLE_LENGTH - 1);
+        auto currAngle = 0.0;
+        for(auto i = 0; i < WAVETABLE_LENGTH; i++)
+        {
+          
+            sineWaveTable[i] = std::sinf(currAngle) + std::sinf(currAngle * static_cast<float>(drawbar.harmonic));
+
+            currAngle += angleDelta;
+        }
+    return sineWaveTable;
+}
+
+void TonewheelOrganSynthAudioProcessor::handleMidiEvent(const juce::MidiMessage& midiEvent)
+{
+    for(auto& drawbar : drawbarsArr) //Go through each drawbar
+    {
+
+//            //Called when key was pressed or key was released etc..
+            if(midiEvent.isNoteOn())
+            {
+                const auto oscillatorId = midiEvent.getNoteNumber(); //Gets note for oscillator from MIDI event
+                const auto frequency = midiNoteNumberToFrequency(oscillatorId);
+                drawbar.oscillators[oscillatorId].setFrequency(frequency); //Set Oscillator to the frequency of the MIDI note played
+                
+            }
+            if(midiEvent.isNoteOff())
+            {
+                const auto oscillatorId = midiEvent.getNoteNumber();
+                drawbar.oscillators[oscillatorId].stop();
+                
+            }
+            if(midiEvent.isAllNotesOff())
+            {
+             
+                    for(auto& oscillator : drawbar.oscillators)
+                    {
+                        oscillator.stop();
+                    }
+        
+            }
+    }
+    
+}
+
+float TonewheelOrganSynthAudioProcessor::midiNoteNumberToFrequency(int midiNoteNumber)
+{
+    constexpr auto A4_FREQUENCY = 440.f; //Fundamental frequency
+    constexpr auto A4_NOTE_NUMBER = 69.f; //
+    constexpr auto SEMITONES_IN_AN_OCTAVE = 12.f;
+    
+    return A4_FREQUENCY * std::powf(2.f, (midiNoteNumber - A4_NOTE_NUMBER) / SEMITONES_IN_AN_OCTAVE);
+    //Fundamental frequency shifted relative to its position
+    //Subtract the A4 note number from the midi note number to get the absolute difference
+   // 2^(difference in semitones)
+}
+
+void TonewheelOrganSynthAudioProcessor::render(juce::AudioBuffer<float> &buffer, int startSample, int endSample)
+{
+    auto * firstChannel = buffer.getWritePointer(0);
+    for(auto& drawbar : drawbarsArr) //Go through each drawbar
+    {
+        for(auto& oscillator : drawbar.oscillators) //Each oscillator in the drawbar
+        {
+            if(oscillator.isPlaying())
+            {
+                for(auto sample = startSample; sample < endSample; sample++)
+                {
+                    firstChannel[sample] += oscillator.getSample() * drawbar.volumeLevel; //Add each sample from the oscillator to channel buffer
+                }
+            }
+        }
+    }
+    for(auto channel = 1; channel < buffer.getNumChannels(); channel++)
+    {
+        std::copy(firstChannel + startSample, firstChannel + endSample, buffer.getWritePointer(channel) + startSample); //Copy first channel to all channels
+     
+    }
+//    reverb.processMono(firstChannel, buffer.getNumSamples());
+////    envelope.applyEnvelopeToBuffer (buffer, 0, buffer.getNumSamples());
+
 }

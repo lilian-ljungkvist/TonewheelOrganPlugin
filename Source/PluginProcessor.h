@@ -9,35 +9,40 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "TonewheelOrgan.h"
-
-
+#include "TonewheelWavetableOscillator.h"
 
 struct DrawbarSettings
 {
-    float volume1{0};
-    float volume2{0};
-    float volume3{0};
-    float volume4{0};
-    float volume5{0};
-    float volume6{0};
-    float volume7{0};
-    float volume8{0};
-    float volume9{0};
+    int volume1{0};
+    int volume2{0};
+    int volume3{0};
+    int volume4{0};
+    int volume5{0};
+    int volume6{0};
+    int volume7{0};
+    int volume8{0};
+    int volume9{0};
     
 };
 
 DrawbarSettings getDrawBarSettings(juce::AudioProcessorValueTreeState& params);
 
+struct Drawbar
+{
+    int volumeLevel;
+    std::vector <TonewheelWavetableOscillator> oscillators;
+    float harmonic;
+};
+
 //==============================================================================
 /**
 */
-class TonewheelAudioProcessor  : public juce::AudioProcessor
+class TonewheelOrganSynthAudioProcessor  : public juce::AudioProcessor
 {
 public:
     //==============================================================================
-    TonewheelAudioProcessor();
-    ~TonewheelAudioProcessor() override;
+    TonewheelOrganSynthAudioProcessor();
+    ~TonewheelOrganSynthAudioProcessor() override;
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -72,13 +77,22 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     
-    static juce::AudioProcessorValueTreeState::ParameterLayout paramCreate();
-    juce::AudioProcessorValueTreeState apvts{*this, nullptr, "Parameters", paramCreate()};
-
+    juce::AudioProcessorValueTreeState apvts;
+    juce::AudioProcessorValueTreeState::ParameterLayout paramCreate();
+    
 
 private:
-    TonewheelOrgan organ;
+    
+    Drawbar drawbarsArr[9];
+    
+    std::vector <float> generateSineWaveTable(Drawbar drawbar);
+    void handleMidiEvent(const juce::MidiMessage& midiEvent);
+    float midiNoteNumberToFrequency(int midiNoteNumber);
+    void render(juce::AudioBuffer<float> &buffer, int startSample, int endSample);
+    void updateDrawBarVolume();
+    
+    void initializeOscillators();
+    
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TonewheelAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TonewheelOrganSynthAudioProcessor)
 };
-

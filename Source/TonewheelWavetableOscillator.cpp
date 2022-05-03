@@ -17,26 +17,26 @@ TonewheelWavetableOscillator::TonewheelWavetableOscillator(std::vector<float> wa
 
 void TonewheelWavetableOscillator::setFrequency(float frequency)
 {
-    indexIncrement = frequency * static_cast<float>(wavetable.size()) / static_cast<double>(sampleRate);
+    indexIncrement = frequency * static_cast<float>(wavetable.size()) / static_cast<double>(sampleRate); // frequency value * numsamples/samplerate
 }
 
 float TonewheelWavetableOscillator::getSample()
 {
-    const auto sample = interpolateLinearly();
-    index += indexIncrement;
-    index = std::fmod(index, static_cast<float>(wavetable.size()));
-    return sample;
+    const auto sample = linearInterpolate(); //lerp samples
+    index += indexIncrement; //go through indices and add the frequency increment
+    index = std::fmod(index, static_cast<float>(wavetable.size()));//Computes the floating-point remainder of the division operation index/wavetable.size
+    return sample; //get the sample within the wavetable
 }
 
-float TonewheelWavetableOscillator::interpolateLinearly()
+float TonewheelWavetableOscillator::linearInterpolate()
 {
-    const auto truncatedIndex = static_cast<int>(index);
-    const auto nextIndex = (truncatedIndex + 1) % static_cast<int>(wavetable.size());
+    const auto truncIndex = static_cast<int>(index); //index cast to integer
+    const auto nextIndex = (truncIndex + 1) % static_cast<int>(wavetable.size());
     
-    const auto nextIndexWeight = index - static_cast<float>(truncatedIndex);
-    const auto truncatedIndexWeight = 1.f - nextIndexWeight;
+    const auto nextIndexWeight = index - static_cast<float>(truncIndex); // index minus float weight
+    const auto truncIndexWeight = 1.f - nextIndexWeight;
     
-    return truncatedIndexWeight * wavetable[truncatedIndex] + nextIndexWeight * wavetable[nextIndex];
+    return truncIndexWeight * wavetable[truncIndex] + nextIndexWeight * wavetable[nextIndex]; //gets the interpolated value
 }
 void TonewheelWavetableOscillator::stop()
 {

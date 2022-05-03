@@ -90,9 +90,9 @@ private:
     float midiNoteNumberToFrequency(int midiNoteNumber);
     void render(juce::AudioBuffer<float> &buffer, int startSample, int endSample);
     void updateDrawBarVolume();
-    
+    juce::Reverb reverb;
+    juce::ADSR envelope;
     void initializeOscillators();
-    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TonewheelOrganSynthAudioProcessor)
 };

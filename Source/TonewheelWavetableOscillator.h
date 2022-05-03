@@ -16,7 +16,7 @@ public:
     TonewheelWavetableOscillator(std::vector<float> wavetable, double sampleRate);
     void setFrequency(float frequency);
     float getSample();
-    float interpolateLinearly();
+    float linearInterpolate();
     void stop();
     bool isPlaying();
 private:
